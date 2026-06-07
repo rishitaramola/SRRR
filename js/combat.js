@@ -58,7 +58,10 @@ SB.Combat = (function () {
         resultShown: false,
         comboBuffer: [], comboTimer: 0,
         dmgNums: [],
-        playerHit: false,       // flag for game.js damage-flash
+        playerHit: false,
+        paused: false,
+        hitStreak: 0,
+        comboFlash: null, comboFlashTimer: 0,
 
         /* ── lifecycle ──────────────────────────────── */
         init(p, e, opts) {
@@ -72,6 +75,9 @@ SB.Combat = (function () {
             this.comboBuffer = []; this.comboTimer = 0;
             this.dmgNums = [];
             this.playerHit = false;
+            this.paused = false;
+            this.hitStreak = 0;
+            this.comboFlash = null; this.comboFlashTimer = 0;
             p.step = 1; e.step = D.ARENA_STEPS - 1;
             p.facing = 1; e.facing = -1;
             E.particles.clear();
@@ -79,6 +85,8 @@ SB.Combat = (function () {
 
         /* ── update ─────────────────────────────────── */
         update(dt) {
+            if (this.paused) return { state: 'paused' };
+            if (this.comboFlashTimer > 0) this.comboFlashTimer -= dt;
             if (this.state === 'intro') {
                 this.introTimer -= dt;
                 if (this.introTimer <= 0) this.state = 'fighting';
@@ -167,13 +175,13 @@ SB.Combat = (function () {
 
         /* ── actions ────────────────────────────────── */
         handleAction(act) {
-            if (this.state !== 'fighting') return;
+            if (this.state !== 'fighting' || this.paused) return;
             const p = this.player;
             if (act === 'block') { if (p.state === 'idle') p.state = 'blocking'; return; }
             if (act === 'block_release') { if (p.state === 'blocking') p.state = 'idle'; return; }
             if (p.state !== 'idle') return;
             if (act === 'left') { this._moveAway(p, this.enemy); return; }
-            if (act === 'right') { this._moveToward(p, this.enemy); return; }
+            if (act === 'right') { this._moveToward(p, this.enemy); this.comboBuffer.push('forward'); this.comboTimer = 0.9; return; }
             if (act === 'swing' || act === 'thrust') {
                 this._attack(p, this.enemy, act);
                 this.comboBuffer.push(act); this.comboTimer = 0.9;
@@ -188,7 +196,8 @@ SB.Combat = (function () {
             E.audio.play(type);
 
             const gap = Math.abs(atk.step - def.step);
-            if (gap <= w.range) {
+            const effectiveRange = w.range + (atk.rangeBonus || 0);
+            if (gap <= effectiveRange) {
                 if (def.state === 'blocking') {
                     E.audio.play('block');
                     E.particles.emit(def.x + def.facing * -15, def.y - 40, 8, { color: '#4ade80', speed: 60, life: 0.3 });
@@ -199,7 +208,8 @@ SB.Combat = (function () {
                     if (atk.isBoss) dmg = Math.round(dmg * 1.15);
                     def.hp = Math.max(0, def.hp - dmg);
                     def.state = 'hit'; def.hitTimer = 0.28;
-                    if (def.isPlayer) this.playerHit = true;
+                    if (def.isPlayer) { this.playerHit = true; this.hitStreak = 0; }
+                    if (atk.isPlayer) this.hitStreak++;
 
                     E.audio.play('hit');
                     E.shake(type === 'thrust' ? 8 : 5, 0.2);
@@ -224,6 +234,8 @@ SB.Combat = (function () {
                             E.particles.emit(this.enemy.x, this.enemy.y - 40, 22, { color: '#f6c742', speed: 190, life: 0.9, gravity: -50 });
                             E.audio.play('hit');
                         }
+                        this.comboFlash = c.name;
+                        this.comboFlashTimer = 1.5;
                         this.comboBuffer = [];
                         break;
                     }

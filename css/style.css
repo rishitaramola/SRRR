@@ -509,3 +509,172 @@ body.ghost-mode .hud-level { color: #c084fc; }
 @keyframes damageFlash {
     from { opacity: 1; } to { opacity: 0; }
 }
+
+/* ── Pause Button ────────────────────────────────────────── */
+.pause-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #e8e0d4;
+    font-size: 16px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 2px;
+}
+.pause-btn:hover, .pause-btn:active { background: rgba(255,255,255,0.18); transform: scale(1.1); }
+.combat-mid-top {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    min-width: 56px;
+}
+
+/* ── HP Row ──────────────────────────────────────────────── */
+.hp-row { display: flex; align-items: center; gap: 6px; }
+.hp-num {
+    font-size: 10px; color: rgba(255,255,255,0.45); font-weight: 600;
+    white-space: nowrap; min-width: 46px;
+    font-variant-numeric: tabular-nums;
+}
+.player-hp-group .hp-num { text-align: left; }
+.enemy-hp-group .hp-num { text-align: right; }
+
+/* ── Pause Overlay ───────────────────────────────────────── */
+.pause-screen {
+    background: rgba(8,8,14,0.88) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 25 !important;
+}
+.pause-content {
+    display: flex; flex-direction: column; align-items: center; gap: 16px;
+    position: relative; z-index: 1;
+    text-align: center;
+}
+.pause-kanji {
+    font-family: 'Noto Serif JP', serif; font-weight: 900;
+    font-size: 100px; opacity: 0.06; position: absolute; top: -80px;
+    pointer-events: none;
+}
+.pause-title {
+    font-size: 36px; font-weight: 900; letter-spacing: 6px; color: #f6c742;
+    text-shadow: 0 0 30px rgba(246,199,66,0.3);
+}
+.pause-combos {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 16px 20px;
+    width: 100%; max-width: 320px;
+    text-align: left;
+}
+.pause-combos-title {
+    font-size: 14px; font-weight: 700; color: #f6c742;
+    margin-bottom: 10px; text-align: center;
+}
+.combo-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 0; gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    font-size: 13px;
+}
+.combo-item:last-child { border-bottom: none; }
+.combo-name { color: #e8e0d4; font-weight: 600; white-space: nowrap; }
+.combo-hint { color: #6b6058; font-size: 11px; flex: 1; text-align: center; }
+.combo-mult { color: #f6c742; font-weight: 700; font-size: 12px; white-space: nowrap; }
+.combo-locked { opacity: 0.3; }
+
+/* ── Combo Flash ─────────────────────────────────────────── */
+.combo-flash {
+    position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
+    z-index: 22;
+    font-size: 26px; font-weight: 900;
+    color: #f6c742;
+    text-shadow: 0 0 30px rgba(246,199,66,0.6), 0 2px 10px rgba(0,0,0,0.6);
+    letter-spacing: 3px; text-transform: uppercase;
+    pointer-events: none; opacity: 0;
+}
+.combo-flash.show { animation: comboFlashIn 1.5s ease-out forwards; }
+@keyframes comboFlashIn {
+    0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
+    12% { opacity: 1; transform: translate(-50%,-50%) scale(1.25); }
+    28% { transform: translate(-50%,-50%) scale(1); }
+    75% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%,-60%) scale(1); }
+}
+
+/* ── Hit Streak ──────────────────────────────────────────── */
+.hit-streak {
+    position: absolute; top: 62px; right: 14px;
+    z-index: 22;
+    font-size: 16px; font-weight: 900;
+    color: #f97316;
+    text-shadow: 0 0 12px rgba(249,115,22,0.5);
+    pointer-events: none;
+    opacity: 0; transition: opacity 0.25s ease;
+}
+.hit-streak.show { opacity: 1; }
+
+/* ── Weapon Forge / Shop ─────────────────────────────────── */
+.shop-materials {
+    font-size: 16px; font-weight: 700; color: #eab308;
+    margin-bottom: 20px;
+}
+.shop-grid {
+    display: flex; flex-direction: column; gap: 16px;
+    width: 100%; max-width: 380px;
+    margin-bottom: 20px;
+}
+.shop-section {
+    background: rgba(12,12,20,0.94);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 18px 20px;
+    text-align: center;
+}
+.shop-section-title {
+    font-size: 16px; font-weight: 700;
+    margin-bottom: 12px; color: #f6c742;
+}
+.shop-current {
+    font-size: 13px; color: #8b8070;
+    margin-bottom: 8px; line-height: 1.7;
+}
+.shop-current span { color: #e8e0d4; font-weight: 700; }
+.shop-next {
+    font-size: 12px; color: #22c55e;
+    margin-bottom: 14px;
+    padding: 8px 14px;
+    background: rgba(34,197,94,0.06);
+    border-radius: 8px;
+    line-height: 1.7;
+}
+.shop-next.maxed { color: #f6c742; background: rgba(246,199,66,0.06); }
+.shop-btn {
+    width: 100%; font-size: 13px; padding: 12px; min-width: auto;
+}
+.shop-btn:disabled {
+    opacity: 0.3; cursor: not-allowed;
+    transform: none !important; box-shadow: none !important;
+}
+
+/* ── Map Actions ─────────────────────────────────────────── */
+.map-actions {
+    display: flex; gap: 10px;
+    width: 100%; max-width: 400px;
+}
+.map-actions .btn { flex: 1; min-width: auto; font-size: 13px; padding: 12px 10px; }
+
+/* ── HUD Materials ───────────────────────────────────────── */
+.hud-materials { color: #eab308; }
+
+/* ── Sound Toggle ────────────────────────────────────────── */
+.sound-toggle {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #8b8070; font-family: 'Inter', sans-serif;
+    font-size: 13px; padding: 8px 16px;
+    border-radius: 20px; cursor: pointer;
+    transition: all 0.2s ease; margin-top: 8px;
+}
+.sound-toggle:hover { border-color: rgba(255,255,255,0.2); color: #e8e0d4; }

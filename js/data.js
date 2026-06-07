@@ -69,9 +69,28 @@ SB.DATA = {
     ],
 
     COMBOS: [
-        { name: 'Cross Slash', seq: ['swing', 'swing'], mult: 1.3, lvl: 3 },
-        { name: 'Lunge Strike', seq: ['forward', 'thrust'], mult: 1.8, lvl: 5 },
-        { name: 'Counter', seq: ['block_absorb', 'thrust'], mult: 2.0, lvl: 7 }
+        { name: 'Cross Slash', seq: ['swing', 'swing'], mult: 1.3, lvl: 0, hint: 'Swing → Swing' },
+        { name: 'Rapid Thrust', seq: ['thrust', 'thrust'], mult: 1.4, lvl: 0, hint: 'Thrust → Thrust' },
+        { name: 'Lunge Strike', seq: ['forward', 'thrust'], mult: 1.8, lvl: 3, hint: '► → Thrust' },
+        { name: 'Counter', seq: ['block_absorb', 'thrust'], mult: 2.0, lvl: 5, hint: 'Block hit → Thrust' },
+        { name: 'Storm Blade', seq: ['swing', 'thrust', 'swing'], mult: 2.2, lvl: 7, hint: 'Swing → Thrust → Swing' },
+        { name: 'Death Blossom', seq: ['swing', 'swing', 'thrust', 'thrust'], mult: 2.8, lvl: 9, hint: '2×Swing → 2×Thrust' }
+    ],
+
+    WEAPON_UPGRADES: [
+        { cost: 3, atk: 2, range: 0.1, name: 'Sharpen Blade' },
+        { cost: 6, atk: 3, range: 0.1, name: 'Reinforce Edge' },
+        { cost: 10, atk: 4, range: 0.15, name: 'Spirit Temper' },
+        { cost: 15, atk: 5, range: 0.2, name: 'Dragon Forge' },
+        { cost: 22, atk: 6, range: 0.25, name: 'Legendary Craft' }
+    ],
+
+    ARMOR_UPGRADES: [
+        { cost: 2, hp: 15, def: 1, name: 'Padded Armor' },
+        { cost: 5, hp: 20, def: 2, name: 'Chain Mail' },
+        { cost: 9, hp: 25, def: 3, name: 'Spirit Guard' },
+        { cost: 14, hp: 30, def: 4, name: 'Dragon Scale' },
+        { cost: 20, hp: 40, def: 5, name: 'Immortal Plate' }
     ],
 
     C: { // Color palette

@@ -21,6 +21,7 @@
             <p class="title-tagline">Death is not the end — it's a second path</p>
             <button id="btn-start" class="btn btn-primary glow-pulse">TAP TO BEGIN</button>
             <p class="title-hint">Use keyboard (A/D + J/K/L) or on-screen buttons</p>
+            <button id="btn-sound" class="sound-toggle">🔊 Sound ON</button>
         </div>
     </div>
 
@@ -29,11 +30,15 @@
         <header class="hud-bar">
             <span class="hud-energy" id="hud-energy">⚡ 50/50</span>
             <span class="hud-level" id="hud-level">Lv. 1</span>
+            <span class="hud-materials" id="hud-materials">🔩 0</span>
             <span class="hud-xp" id="hud-xp">XP: 0</span>
         </header>
         <h2 class="section-title">Choose Your Path</h2>
         <div id="territory-list" class="card-list"></div>
-        <button id="btn-sidequests" class="btn btn-outline">📜 Side Quests (Free)</button>
+        <div class="map-actions">
+            <button id="btn-shop" class="btn btn-outline">🔨 Weapon Forge</button>
+            <button id="btn-sidequests" class="btn btn-outline">📜 Side Quests (Free)</button>
+        </div>
     </div>
 
     <!-- ═══ Pre-Fight ═══ -->
@@ -70,18 +75,23 @@
         <div class="combat-top">
             <div class="hp-group player-hp-group">
                 <span class="hp-name" id="c-pname">You</span>
-                <div class="hp-track"><div class="hp-fill" id="c-php" style="width:100%"></div></div>
+                <div class="hp-row"><div class="hp-track"><div class="hp-fill" id="c-php" style="width:100%"></div></div><span class="hp-num" id="c-phpnum"></span></div>
             </div>
-            <div class="combat-timer" id="c-timer">3:00</div>
+            <div class="combat-mid-top">
+                <div class="combat-timer" id="c-timer">3:00</div>
+                <button id="btn-pause" class="pause-btn" aria-label="Pause">⏸</button>
+            </div>
             <div class="hp-group enemy-hp-group">
                 <span class="hp-name" id="c-ename">Enemy</span>
-                <div class="hp-track"><div class="hp-fill enemy-fill" id="c-ehp" style="width:100%"></div></div>
+                <div class="hp-row"><div class="hp-track"><div class="hp-fill enemy-fill" id="c-ehp" style="width:100%"></div></div><span class="hp-num" id="c-ehpnum"></span></div>
             </div>
         </div>
         <div class="combat-xp">
             <div class="xp-track"><div class="xp-fill" id="c-xp" style="width:0%"></div></div>
             <span class="xp-lbl" id="c-xplbl">Lv.1</span>
         </div>
+        <div id="combo-flash" class="combo-flash"></div>
+        <div id="hit-streak" class="hit-streak"></div>
         <div class="combat-controls">
             <div class="ctrl-move">
                 <button id="btn-left" class="cbtn cbtn-move" data-action="left">◄</button>
@@ -93,6 +103,41 @@
                 <button id="btn-block" class="cbtn cbtn-block" data-action="block">🛡 BLOCK</button>
             </div>
         </div>
+    </div>
+
+    <!-- ═══ Pause Menu ═══ -->
+    <div id="screen-pause" class="screen pause-screen">
+        <div class="pause-content">
+            <div class="pause-kanji" aria-hidden="true">止</div>
+            <h2 class="pause-title">PAUSED</h2>
+            <div class="pause-combos" id="pause-combos">
+                <h3 class="pause-combos-title">⚔ Combo Moves</h3>
+                <div id="combo-list"></div>
+            </div>
+            <button id="btn-resume" class="btn btn-primary">▶ Continue</button>
+            <button id="btn-exit-fight" class="btn btn-ghost-outline">✕ Exit to Map</button>
+        </div>
+    </div>
+
+    <!-- ═══ Weapon Forge ═══ -->
+    <div id="screen-shop" class="screen">
+        <h2 class="section-title">🔨 Weapon Forge</h2>
+        <div class="shop-materials" id="shop-materials">🔩 Materials: 0</div>
+        <div class="shop-grid">
+            <div class="shop-section">
+                <h3 class="shop-section-title">⚔ Weapon</h3>
+                <div class="shop-current" id="shop-wpn-cur"></div>
+                <div class="shop-next" id="shop-wpn-next"></div>
+                <button id="btn-upgrade-wpn" class="btn btn-primary shop-btn">Upgrade Weapon</button>
+            </div>
+            <div class="shop-section">
+                <h3 class="shop-section-title">🛡 Armor</h3>
+                <div class="shop-current" id="shop-arm-cur"></div>
+                <div class="shop-next" id="shop-arm-next"></div>
+                <button id="btn-upgrade-arm" class="btn btn-primary shop-btn">Upgrade Armor</button>
+            </div>
+        </div>
+        <button id="btn-shop-back" class="btn btn-ghost-outline">← Back to Map</button>
     </div>
 
     <!-- ═══ Post-Fight ═══ -->

@@ -29,10 +29,12 @@ SB.Game = (function () {
         completedTerritories: [],
         sqDone: [],             // "territory-questIndex"
         materials: 0,
+        weaponLv: 0,
+        armorLv: 0,
         inBoss: false,
         inSQ: false,
         sqIdx: -1,
-        lastPlayerHp: Infinity  // for damage-flash detection
+        lastPlayerHp: Infinity
     };
 
     /* ===================================================
@@ -87,6 +89,141 @@ SB.Game = (function () {
     }
 
     /* ===================================================
+       UPGRADE HELPERS
+       =================================================== */
+    function wpnBonus() {
+        let atk = 0, range = 0;
+        for (let i = 0; i < st.weaponLv; i++) { const u = D.WEAPON_UPGRADES[i]; if (u) { atk += u.atk; range += u.range; } }
+        return { atk, range };
+    }
+    function armBonus() {
+        let hp = 0, def = 0;
+        for (let i = 0; i < st.armorLv; i++) { const u = D.ARMOR_UPGRADES[i]; if (u) { hp += u.hp; def += u.def; } }
+        return { hp, def };
+    }
+    function boostedStats() {
+        const s = D.stats(st.playerLevel), w = wpnBonus(), a = armBonus();
+        return { maxHp: s.maxHp + a.hp, atk: s.atk + w.atk, def: s.def + a.def };
+    }
+    function applyUpgrades(fighter) {
+        const w = wpnBonus(), a = armBonus();
+        fighter.atk += w.atk; fighter.maxHp += a.hp; fighter.hp += a.hp; fighter.def += a.def;
+        fighter.rangeBonus = w.range;
+    }
+
+    /* ===================================================
+       PAUSE / RESUME
+       =================================================== */
+    function pauseGame() {
+        if (st.screen !== 'combat' || C.scene.state !== 'fighting') return;
+        C.scene.paused = true;
+        renderComboList();
+        document.getElementById('screen-pause').classList.add('active');
+        st.screen = 'pause';
+    }
+    function resumeGame() {
+        C.scene.paused = false;
+        document.getElementById('screen-pause').classList.remove('active');
+        st.screen = 'combat';
+    }
+    function exitFight() {
+        C.scene.paused = false;
+        document.getElementById('screen-pause').classList.remove('active');
+        st.inBoss = false; st.inSQ = false;
+        renderMap(); show('map');
+    }
+    function renderComboList() {
+        const el = document.getElementById('combo-list');
+        if (!el) return;
+        el.innerHTML = '';
+        D.COMBOS.forEach(c => {
+            const locked = c.lvl > st.playerLevel;
+            const d = document.createElement('div');
+            d.className = 'combo-item' + (locked ? ' combo-locked' : '');
+            d.innerHTML = '<span class="combo-name">' + c.name + '</span>' +
+                '<span class="combo-hint">' + (c.hint || c.seq.join(' → ')) + '</span>' +
+                '<span class="combo-mult">×' + c.mult + '</span>';
+            if (locked) d.innerHTML += '<span style="font-size:10px;color:#5a5048"> Lv.' + c.lvl + '</span>';
+            el.appendChild(d);
+        });
+    }
+
+    /* ===================================================
+       WEAPON FORGE (SHOP)
+       =================================================== */
+    function renderShop() {
+        regenEnergy();
+        document.getElementById('shop-materials').textContent = '\uD83D\uDD29 Materials: ' + st.materials;
+        const wb = wpnBonus(), ab = armBonus();
+        // Weapon
+        const wCur = document.getElementById('shop-wpn-cur');
+        const wNext = document.getElementById('shop-wpn-next');
+        const wBtn = document.getElementById('btn-upgrade-wpn');
+        wCur.innerHTML = 'Level <span>' + st.weaponLv + '</span> / ' + D.WEAPON_UPGRADES.length +
+            '<br>ATK Bonus: <span>+' + wb.atk + '</span> · Range: <span>+' + wb.range.toFixed(1) + '</span>';
+        if (st.weaponLv < D.WEAPON_UPGRADES.length) {
+            const u = D.WEAPON_UPGRADES[st.weaponLv];
+            wNext.className = 'shop-next';
+            wNext.innerHTML = 'Next: <b>' + u.name + '</b><br>+' + u.atk + ' ATK · +' + u.range.toFixed(1) + ' Range<br>Cost: \uD83D\uDD29 ' + u.cost;
+            wBtn.disabled = st.materials < u.cost;
+            wBtn.textContent = st.materials >= u.cost ? '\uD83D\uDD28 Upgrade (' + u.cost + ' \uD83D\uDD29)' : 'Need ' + u.cost + ' \uD83D\uDD29';
+        } else { wNext.className = 'shop-next maxed'; wNext.innerHTML = '⭐ MAX LEVEL'; wBtn.disabled = true; wBtn.textContent = 'Maxed Out'; }
+        // Armor
+        const aCur = document.getElementById('shop-arm-cur');
+        const aNext = document.getElementById('shop-arm-next');
+        const aBtn = document.getElementById('btn-upgrade-arm');
+        aCur.innerHTML = 'Level <span>' + st.armorLv + '</span> / ' + D.ARMOR_UPGRADES.length +
+            '<br>HP Bonus: <span>+' + ab.hp + '</span> · DEF: <span>+' + ab.def + '</span>';
+        if (st.armorLv < D.ARMOR_UPGRADES.length) {
+            const u = D.ARMOR_UPGRADES[st.armorLv];
+            aNext.className = 'shop-next';
+            aNext.innerHTML = 'Next: <b>' + u.name + '</b><br>+' + u.hp + ' HP · +' + u.def + ' DEF<br>Cost: \uD83D\uDD29 ' + u.cost;
+            aBtn.disabled = st.materials < u.cost;
+            aBtn.textContent = st.materials >= u.cost ? '\uD83D\uDEE1 Upgrade (' + u.cost + ' \uD83D\uDD29)' : 'Need ' + u.cost + ' \uD83D\uDD29';
+        } else { aNext.className = 'shop-next maxed'; aNext.innerHTML = '⭐ MAX LEVEL'; aBtn.disabled = true; aBtn.textContent = 'Maxed Out'; }
+        show('shop');
+    }
+    function upgradeWeapon() {
+        if (st.weaponLv >= D.WEAPON_UPGRADES.length) return;
+        const u = D.WEAPON_UPGRADES[st.weaponLv];
+        if (st.materials < u.cost) return;
+        st.materials -= u.cost; st.weaponLv++;
+        E.audio.play('levelUp'); renderShop(); save();
+    }
+    function upgradeArmor() {
+        if (st.armorLv >= D.ARMOR_UPGRADES.length) return;
+        const u = D.ARMOR_UPGRADES[st.armorLv];
+        if (st.materials < u.cost) return;
+        st.materials -= u.cost; st.armorLv++;
+        E.audio.play('levelUp'); renderShop(); save();
+    }
+
+    /* ===================================================
+       COMBO / STREAK DISPLAY
+       =================================================== */
+    function showComboFlash(name) {
+        const el = document.getElementById('combo-flash');
+        if (!el) return;
+        el.textContent = name + '!';
+        el.classList.remove('show');
+        void el.offsetWidth;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 1600);
+    }
+    function updateHitStreak() {
+        const el = document.getElementById('hit-streak');
+        if (!el) return;
+        const s = C.scene.hitStreak || 0;
+        if (s >= 2) { el.textContent = '\uD83D\uDD25 ' + s + ' Hits'; el.classList.add('show'); }
+        else { el.classList.remove('show'); }
+    }
+    function updateHpNums() {
+        const p = C.scene.player, e = C.scene.enemy;
+        if (p) document.getElementById('c-phpnum').textContent = Math.ceil(p.hp) + '/' + p.maxHp;
+        if (e) document.getElementById('c-ehpnum').textContent = Math.ceil(e.hp) + '/' + e.maxHp;
+    }
+
+    /* ===================================================
        TERRITORY MAP
        =================================================== */
     function renderMap() {
@@ -117,6 +254,7 @@ SB.Game = (function () {
 
         document.getElementById('hud-energy').textContent = '⚡ ' + st.energy + '/' + D.ENERGY_MAX;
         document.getElementById('hud-level').textContent = 'Lv. ' + st.playerLevel;
+        document.getElementById('hud-materials').textContent = '\uD83D\uDD29 ' + st.materials;
         document.getElementById('hud-xp').textContent = 'XP: ' + st.playerXp;
     }
 
@@ -127,7 +265,7 @@ SB.Game = (function () {
         const isBoss = st.fightIndex >= 10 || st.inBoss;
         const selfFight = st.ghostMode && st.ghostLevel >= D.MAX_LEVEL - 1;
         const eLvl = selfFight ? st.playerLevel : Math.min(st.fightIndex + 1, 10);
-        const pS = D.stats(st.playerLevel);
+        const pS = boostedStats();
         const eS = isBoss ? D.bossStats(eLvl) : D.stats(eLvl);
         const t = currentTerritory();
 
@@ -174,6 +312,7 @@ SB.Game = (function () {
             bodyColor: st.ghostMode ? '#9f7aea' : D.C.playerBody,
             armorColor: st.ghostMode ? '#5b21b6' : D.C.playerArmor
         });
+        applyUpgrades(player);
 
         const enemy = C.createFighter({
             level: eLvl, step: D.ARENA_STEPS - 1, facing: -1,
@@ -215,6 +354,7 @@ SB.Game = (function () {
             bodyColor: st.ghostMode ? '#9f7aea' : D.C.playerBody,
             armorColor: st.ghostMode ? '#5b21b6' : D.C.playerArmor
         });
+        applyUpgrades(player);
         const enemy = C.createFighter({
             level: eLvl, step: D.ARENA_STEPS - 1, facing: -1,
             bodyColor: '#b8860b', armorColor: t.accent
@@ -367,7 +507,7 @@ SB.Game = (function () {
             const d = {};
             ['territory', 'fightIndex', 'playerLevel', 'playerXp', 'energy', 'lastEnergyTs',
                 'loseStreak', 'bossLosses', 'ghostMode', 'ghostLevel', 'ghostLosses', 'ghostUsed',
-                'completedTerritories', 'sqDone', 'materials', 'inBoss'].forEach(k => d[k] = st[k]);
+                'completedTerritories', 'sqDone', 'materials', 'weaponLv', 'armorLv', 'inBoss'].forEach(k => d[k] = st[k]);
             localStorage.setItem('spiritblade', JSON.stringify(d));
         } catch (e) { /* no-op */ }
     }
@@ -392,6 +532,7 @@ SB.Game = (function () {
        UPDATE  (called by Engine every frame)
        =================================================== */
     function update(dt) {
+        if (st.screen === 'pause') return;
         if (st.screen !== 'combat') return;
 
         const r = C.scene.update(dt);
@@ -402,6 +543,7 @@ SB.Game = (function () {
         document.getElementById('c-timer').textContent = C.scene.timerStr();
         document.getElementById('c-xp').style.width = (xpPct() * 100) + '%';
         document.getElementById('c-xplbl').textContent = 'Lv.' + st.playerLevel;
+        updateHpNums();
 
         // Low HP color
         document.getElementById('c-php').style.background =
@@ -410,6 +552,15 @@ SB.Game = (function () {
 
         // Damage flash
         if (C.scene.playerHit) { flashDmg(); C.scene.playerHit = false; }
+
+        // Combo flash
+        if (C.scene.comboFlash && C.scene.comboFlashTimer > 1.4) {
+            showComboFlash(C.scene.comboFlash);
+            C.scene.comboFlash = null;
+        }
+
+        // Hit streak
+        updateHitStreak();
 
         // Fight result
         if ((r.state === 'win' || r.state === 'lose' || r.state === 'timeout') && !C.scene.resultShown) {
@@ -422,7 +573,7 @@ SB.Game = (function () {
        DRAW  (called by Engine every frame)
        =================================================== */
     function drawFn(ctx, W, H) {
-        if (st.screen === 'combat') {
+        if (st.screen === 'combat' || st.screen === 'pause') {
             C.scene.draw(ctx, W, H);
         } else {
             const t = currentTerritory();
@@ -456,6 +607,11 @@ SB.Game = (function () {
 
         // Keyboard
         document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' || e.key.toLowerCase() === 'p') {
+                if (st.screen === 'combat') pauseGame();
+                else if (st.screen === 'pause') resumeGame();
+                return;
+            }
             if (st.screen !== 'combat') return;
             const k = e.key.toLowerCase();
             if (k === 'a' || k === 'arrowleft') C.scene.handleAction('left');
@@ -481,6 +637,20 @@ SB.Game = (function () {
         document.getElementById('btn-sidequests')?.addEventListener('click', renderSQ);
         document.getElementById('btn-sq-back')?.addEventListener('click', () => { renderMap(); show('map'); });
         document.getElementById('btn-ghost-enter')?.addEventListener('click', enterGhost);
+        document.getElementById('btn-pause')?.addEventListener('click', pauseGame);
+        document.getElementById('btn-resume')?.addEventListener('click', resumeGame);
+        document.getElementById('btn-exit-fight')?.addEventListener('click', exitFight);
+        document.getElementById('btn-shop')?.addEventListener('click', renderShop);
+        document.getElementById('btn-upgrade-wpn')?.addEventListener('click', upgradeWeapon);
+        document.getElementById('btn-upgrade-arm')?.addEventListener('click', upgradeArmor);
+        document.getElementById('btn-shop-back')?.addEventListener('click', () => { renderMap(); show('map'); });
+        document.getElementById('btn-sound')?.addEventListener('click', () => {
+            const btn = document.getElementById('btn-sound');
+            if (E.audio && E.audio.ctx) {
+                if (E.audio.ctx.state === 'running') { E.audio.ctx.suspend(); btn.textContent = '\uD83D\uDD07 Sound OFF'; }
+                else { E.audio.ctx.resume(); btn.textContent = '\uD83D\uDD0A Sound ON'; }
+            }
+        });
         document.getElementById('btn-next-territory')?.addEventListener('click', () => {
             if (st.territory < D.TERRITORIES.length - 1) {
                 st.territory++; st.fightIndex = 0; st.bossLosses = 0; st.ghostUsed = false;
@@ -496,6 +666,7 @@ SB.Game = (function () {
                 loseStreak: 0, bossLosses: 0,
                 ghostMode: false, ghostLevel: 0, ghostLosses: 0, ghostUsed: false,
                 completedTerritories: [], sqDone: [], materials: 0,
+                weaponLv: 0, armorLv: 0,
                 inBoss: false, inSQ: false
             });
             show('title');
