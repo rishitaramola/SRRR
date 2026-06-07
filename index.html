@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta name="description" content="SpiritBlade — A skill-based action RPG where death becomes a second path through ghost possession.">
+    <title>SpiritBlade — 魂刃</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Noto+Serif+JP:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- ═══ Title Screen ═══ -->
+    <div id="screen-title" class="screen active">
+        <div class="title-content">
+            <div class="title-kanji" aria-hidden="true">魂刃</div>
+            <h1 class="title-name">SPIRIT<span class="accent">BLADE</span></h1>
+            <p class="title-tagline">Death is not the end — it's a second path</p>
+            <button id="btn-start" class="btn btn-primary glow-pulse">TAP TO BEGIN</button>
+            <p class="title-hint">Use keyboard (A/D + J/K/L) or on-screen buttons</p>
+        </div>
+    </div>
+
+    <!-- ═══ Territory Map ═══ -->
+    <div id="screen-map" class="screen">
+        <header class="hud-bar">
+            <span class="hud-energy" id="hud-energy">⚡ 50/50</span>
+            <span class="hud-level" id="hud-level">Lv. 1</span>
+            <span class="hud-xp" id="hud-xp">XP: 0</span>
+        </header>
+        <h2 class="section-title">Choose Your Path</h2>
+        <div id="territory-list" class="card-list"></div>
+        <button id="btn-sidequests" class="btn btn-outline">📜 Side Quests (Free)</button>
+    </div>
+
+    <!-- ═══ Pre-Fight ═══ -->
+    <div id="screen-prefight" class="screen">
+        <div class="vs-container">
+            <div class="vs-card">
+                <div class="vs-label">YOU</div>
+                <div class="vs-avatar player-avatar" id="pf-player-avatar"></div>
+                <div class="vs-stat">Lv.<span id="pf-plv">1</span></div>
+                <div class="vs-stat">HP <span id="pf-php">100</span></div>
+                <div class="vs-stat">ATK <span id="pf-patk">11</span></div>
+            </div>
+            <div class="vs-divider">
+                <span class="vs-text">VS</span>
+            </div>
+            <div class="vs-card enemy-vs-card">
+                <div class="vs-label" id="pf-ename">Enemy</div>
+                <div class="vs-avatar enemy-avatar" id="pf-enemy-avatar"></div>
+                <div class="vs-stat">Lv.<span id="pf-elv">1</span></div>
+                <div class="vs-stat">HP <span id="pf-ehp">100</span></div>
+                <div class="vs-stat">ATK <span id="pf-eatk">11</span></div>
+            </div>
+        </div>
+        <div class="pf-meta">
+            <span id="pf-type" class="pf-type-badge">Main Story</span>
+            <span id="pf-cost" class="pf-cost">⚡ 2</span>
+        </div>
+        <button id="btn-fight" class="btn btn-primary">⚔️ FIGHT</button>
+        <button id="btn-back" class="btn btn-ghost-outline">← Back</button>
+    </div>
+
+    <!-- ═══ Combat Screen ═══ -->
+    <div id="screen-combat" class="screen">
+        <div class="combat-top">
+            <div class="hp-group player-hp-group">
+                <span class="hp-name" id="c-pname">You</span>
+                <div class="hp-track"><div class="hp-fill" id="c-php" style="width:100%"></div></div>
+            </div>
+            <div class="combat-timer" id="c-timer">3:00</div>
+            <div class="hp-group enemy-hp-group">
+                <span class="hp-name" id="c-ename">Enemy</span>
+                <div class="hp-track"><div class="hp-fill enemy-fill" id="c-ehp" style="width:100%"></div></div>
+            </div>
+        </div>
+        <div class="combat-xp">
+            <div class="xp-track"><div class="xp-fill" id="c-xp" style="width:0%"></div></div>
+            <span class="xp-lbl" id="c-xplbl">Lv.1</span>
+        </div>
+        <div class="combat-controls">
+            <div class="ctrl-move">
+                <button id="btn-left" class="cbtn cbtn-move" data-action="left">◄</button>
+                <button id="btn-right" class="cbtn cbtn-move" data-action="right">►</button>
+            </div>
+            <div class="ctrl-actions">
+                <button id="btn-swing" class="cbtn cbtn-swing" data-action="swing">⚔ SWING</button>
+                <button id="btn-thrust" class="cbtn cbtn-thrust" data-action="thrust">🗡 THRUST</button>
+                <button id="btn-block" class="cbtn cbtn-block" data-action="block">🛡 BLOCK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ Post-Fight ═══ -->
+    <div id="screen-postfight" class="screen">
+        <div id="pf-result" class="pf-result">VICTORY</div>
+        <div class="pf-rewards" id="pf-rewards"></div>
+        <button id="btn-continue" class="btn btn-primary">Continue</button>
+    </div>
+
+    <!-- ═══ Ghost Transition ═══ -->
+    <div id="screen-ghost" class="screen ghost-screen">
+        <div class="ghost-content">
+            <div class="ghost-kanji" aria-hidden="true">魂</div>
+            <h2 class="ghost-headline">YOUR SPIRIT ENDURES</h2>
+            <p class="ghost-body">You have fallen twice, but death is not the end.<br>Possess your enemies. Rebuild your strength.<br>Reclaim your body.</p>
+            <button id="btn-ghost-enter" class="btn btn-ghost-mode glow-pulse">Enter Ghost Mode 👻</button>
+        </div>
+    </div>
+
+    <!-- ═══ Side Quests ═══ -->
+    <div id="screen-sq" class="screen">
+        <h2 class="section-title">Side Quests</h2>
+        <p class="sq-free">Free — No energy cost</p>
+        <div id="sq-list" class="card-list"></div>
+        <button id="btn-sq-back" class="btn btn-outline">← Back to Map</button>
+    </div>
+
+    <!-- ═══ Territory Victory ═══ -->
+    <div id="screen-territory-win" class="screen">
+        <div class="tw-content">
+            <div class="tw-kanji" aria-hidden="true">勝</div>
+            <h2 class="tw-headline">TERRITORY CONQUERED</h2>
+            <div class="tw-rewards" id="tw-rewards"></div>
+            <button id="btn-next-territory" class="btn btn-primary">Next Territory →</button>
+        </div>
+    </div>
+
+    <!-- ═══ Game Complete ═══ -->
+    <div id="screen-complete" class="screen">
+        <div class="tw-content">
+            <div class="tw-kanji" aria-hidden="true">完</div>
+            <h2 class="tw-headline">ALL TERRITORIES CONQUERED</h2>
+            <p class="ghost-body">You have mastered every territory.<br>The spirit of the blade is yours.</p>
+            <button id="btn-restart" class="btn btn-primary">Play Again</button>
+        </div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/combat.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html>
